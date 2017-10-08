@@ -1,0 +1,43 @@
+=== Run information ===
+
+Scheme:       weka.classifiers.functions.LibSVM -S 0 -K 0 -D 3 -G 0.0 -R 0.0 -N 0.5 -M 40.0 -C 6.7 -E 0.001 -P 0.1 -Z -model /Users/tiancongli/workspace/coursework/kt/project -seed 1
+Relation:     twitter-adr
+Instances:    3166
+Attributes:   243
+              [list of attributes omitted]
+Test mode:    user supplied test set:  size unknown (reading incrementally)
+
+=== Classifier model (full training set) ===
+
+LibSVM wrapper, original code by Yasser EL-Manzalawy (= WLSVM)
+
+Time taken to build model: 2.28 seconds
+
+=== Evaluation on test set ===
+
+Time taken to test model on supplied test set: 0.43 seconds
+
+=== Summary ===
+
+Correctly Classified Instances         971               90.2416 %
+Incorrectly Classified Instances       105                9.7584 %
+Kappa statistic                          0.3259
+Mean absolute error                      0.0976
+Root mean squared error                  0.3124
+Relative absolute error                 49.04   %
+Root relative squared error            101.4203 %
+Total Number of Instances             1076     
+
+=== Detailed Accuracy By Class ===
+
+                 TP Rate  FP Rate  Precision  Recall   F-Measure  MCC      ROC Area  PRC Area  Class
+                 0.977    0.728    0.919      0.977    0.947      0.354    0.625     0.918     N
+                 0.272    0.023    0.585      0.272    0.371      0.354    0.625     0.236     Y
+Weighted Avg.    0.902    0.653    0.883      0.902    0.886      0.354    0.625     0.846     
+
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+ 940  22 |   a = N
+  83  31 |   b = Y
+
