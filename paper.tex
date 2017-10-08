@@ -1,0 +1,401 @@
+\documentclass[11pt]{article}
+\usepackage{colacl}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[table]{xcolor}
+
+\definecolor{Gray}{gray}{0.7}
+
+\sloppy
+
+
+
+\title{Identifying Tweets with Adverse Drug Reactions}
+% \author
+% {Aaron A. Aaronstein}
+
+
+
+\begin{document}
+
+\maketitle
+
+
+%\begin{abstract}
+%This is a \LaTeX\ sample for your paper.
+%\end{abstract}
+
+\section{Introduction}
+This report clarifies how to extract features from tweets and
+use supervised machine learning methods to determine
+whether a tweet contains an ADR\footnotemark, and gain knowledge from it.
+% An adverse drug reaction (ADR) is an injury
+% caused by taking a medication\cite{wiki:adr}.
+In this report, we will use Weka\cite{Hall:2009:WDM:1656274.1656278}
+as the machine learning package.
+\footnotetext{\url{https://en.wikipedia.org/wiki/Adverse_drug_reaction}}
+
+\section{Dataset}
+The dataset is from Twitter,
+and is an altered form of a dataset from the DIEGO Lab\cite{SARKER2015196}.
+Three parts are included.
+We will use training data to train the model,
+use development data to evaluate
+and predict whether the test data contain ADRs.
+
+\section{Related work}
+Some researches apply NLP techniques
+and machine learning methods to detect ADR.
+As described by \newcite{SARKER2015196},
+his research used NLP approches to generate rich semantic
+and linguistic features from the online texts
+and use supervised machine learning methods to classify the instances.
+
+\section{Machine learning methods}
+There are bunch of classification methods, such as Naive Bayes, K-nearest, SVM,
+and etc.
+when trying Naive Bayes with unigram features,
+the accuracy is $82.1561\%$, which seems good,
+but the F-Measure of positive ADR is only $0.364$.
+The reason is that the class distribution is highly skewed,
+with $89.4\%$'s negative ADR.
+So, even we always predict the negative,
+the accuracy could be higher($89.4\%$), but obviously it is not a good model.
+As a result, except accuracy,
+we will also focus on the F-Measure in the following analysis.
+
+According to the previous researches, SVM with linear kernal gives
+a good performance, so we choose it as our classification method
+and by using Weka,
+we use LibSVM\cite{CC01a},
+which has a better performance than the original SMO package.
+
+\section{Basic features}
+The basic approach used Mutural Information to identify
+92 best unigrams from tweets.
+The Mutural Information is a method to calculate the dependency between features.
+
+$${\displaystyle I(X;Y)=\sum _{y\in Y}\sum _{x\in X}p(x,y)\log {\left({\frac {p(x,y)}{p(x)\,p(y)}}\right)}}$$
+As formula is given,
+the feature is more valuable
+if it is more related to the class label.
+We use tweet ID and the 92 unigrams as basic features.
+
+
+\section{New features}
+By observing bad cases of the unigram-feature model,
+We find some new features
+which could help increase the performance.
+
+\subsection{Punctuation}
+Punctuation conveys the user's emotion and attitude to some extent,
+and the tweets contain ADRs may be likely to use more punctuation(e.g. when complaining).
+Several marks are chosen from the tweets.
+\begin{itemize}
+  \item Exclamation mark.
+  \item Question mark.
+  \item Ellipsis mark("...").
+\end{itemize}
+
+We use the frequency of each type of punctuation as a new feature,
+since more than one mark could occur in one single tweet.
+
+% \subsubsection{Exclamation mark}
+% The first punctuation I found is the exclamation mark.
+% As a new feature, we used the frequency of it since there may be more than one
+% exclamation mark in the tweet,
+% which could convey different emotion.
+%
+% \subsubsection{Question mark}
+% The second one is the question mark,
+% and we also used the frequency to construct the new feature.
+%
+% \subsubsection{Ellipsis}
+% Finally, ellipsis often occurred in a tweet,
+% such as "Well thank god for Abilify in my case...".
+% We count the frequency of the string ".." in the tweet as the new feature.
+
+\subsection{Emotional icons}
+Likewise, people use emotional icons(such as :( or :D)
+to describe their emotion.
+I collect many emotional icons from the tweets,
+and divide them into two sets,
+which respectively represent the positive and the negative emotion.
+So, we divide the tweets into three parts,
+"Happy", "Unhappy" and "Neutral"(H, U, N).
+By this way, we create a new nominal feature(H, U, N).
+
+% \subsection{Tweet length}
+% I chose the length of tweets as another new feature,
+% since the users may use longer sentences to convey some strong emotion.
+% However, the result is still unknown, we just try it first.
+
+\subsection{ADR lexicon}
+There are some ADR related terms in the tweets,
+such as some drug side effects(e.g. insomnia),
+and when these terms occur, obviously,
+it will be more likely to find an ADR.
+So, we use the frequency of ADR related terms as the new feature.
+The ADR lexicon is cited from \newcite{doi:10.1093/jamia/ocu041},
+including information from SIDER,
+CHV(Consumer Health Vocabulary) and DIEGO\_lab.
+
+\subsection{Sentiment analysis}
+Many tweets contain sentiment, which may be related to ADR.
+For example, the first instance, "Glad I'm taking olanzapine...",
+presents positive sensiment, which may suggest there is no ADR.
+We have already extracted a sentiment related feature, the emotion icon,
+but we still want to consider the sentiment of the whole tweet text.
+By using python package TextBlob\cite{textblob},
+which has a method to quantify the sentiment polarity, from -1 to 1,
+we extract this value from tweets as a new feature.
+
+\subsubsection{Subjectivity}
+Another paramter given by TextBlob package
+is the subjectivity,
+which evaluates whether the given text is subjective or objective,
+also with the range from -1 to 1.
+We also use it as a new feature,
+since the subjectivity of tweet may have some relation with the ADR.
+
+\subsection{Polynomial features}
+More features could be generated
+by polynomial combinations of the original ones,
+and may give us some better performance.
+We used python package scikit-learn\cite{scikit-learn}
+to create the 3-degree polynomial features among punctuation features
+and among lexicon and sentiment features.
+
+\subsection{Topic model}
+Tweets may contain different topics,
+and the ones which contain ADRs may have similar topics.
+Based on this idea, we extract the topic features from tweets,
+using Stanford Topic Modeling Toolbox\cite{ramage-tmt},
+which generates weights of topics according to the text,
+and we use these weights as new features.
+% The feature number depends on the number of topics we set, which is 10.
+
+
+
+
+\subsection{Doc2Vec}
+Based on the words and their contexts,
+text could be converted into a N-dimension vector.
+This method is called Doc2Vec.
+By using python package gensim\cite{rehurek_lrec},
+we genenrate a 100-dimension vector for each tweet
+and use vector values as features.
+
+\section{Evaluation}
+\addtocounter{footnote}{1}
+\footnotetext{lss means the combination of lexicon, sentiment and subjectivity}
+\addtocounter{footnote}{-1}
+
+% Using the original approach and construct the model with Naive Bayes,
+% the accuracy when predicting dev data is $82.1561\%$, which is pretty good,
+% but the F-Score of positive ADR is only $0.364$.
+% The reason is that the class distribution is highly skewed,
+% with $89.4\%$'s negative ADR.
+% So, even if we construct a very simple model
+% which just always predicts the negative,
+% the accuracy could be higher($89.4\%$).
+% So, the accuracy may not be the best evaluation metric for this problem,
+% and we will focus more on the FScore in the following analysis.
+%
+% In this section, we will use the FScore as the main evaluation metric,
+% while the accuracy will also be considered.
+% We run the different feature sets by Weka using the Naive Bayes algorithm,
+% and the output is shown below.
+\begin{table}[h]
+\begin{center}
+    \begin{tabular}{|p{1.5cm}|r|r|r|r|}
+      \hline
+      Feature & Accu & F1/N & F1/Y & F1\\
+      \hline
+      \rowcolor{Gray}Baseline & 89.4052\% & 0.944 & 0.0 & 0.844\\
+      \hline
+      \rowcolor{Gray}Basic features & 89.777\% & 0.945 & 0.286 & 0.875\\
+      \hline
+      Basic + punctuation& 89.684\% & 0.944 & 0.343 & 0.880\\
+      \hline
+      \rowcolor{blue!30}Basic + punc (poly)& 89.9628\% & 0.946 & 0.349 & 0.882\\
+      \hline
+      Basic + emotion& 89.684\% & 0.944 & 0.343 & 0.880\\
+      \hline
+      Basic + lexicon& 90.0558\% & 0.946 & 0.301 & 0.878\\
+      \hline
+      Basic + sentiment & 89.8699\% & 0.946 & 0.278 & 0.875\\
+      \hline
+      Basic + subjectivity & 89.777\% & 0.945 & 0.345 & 0.881\\
+      \hline
+      \rowcolor{blue!30}Basic + lss\footnotemark(poly) & 89.8699\% & 0.945 & 0.323 & 0.879\\
+      \hline
+      Basic + topic & 89.777\% & 0.945 & 0.329 & 0.879\\
+      \hline
+      Basic + doc2vec & 89.8699\% & 0.945 & 0.297 & 0.877\\
+      \hline
+      Basic + All & 89.9628\% & 0.946 & 0.341 & 0.882\\
+      \hline
+      \rowcolor{red!30}Basic + All(poly) & 90.2416\% & 0.947 & 0.371 & 0.886\\
+      \hline
+    \end{tabular}
+    \caption{Comparison of different features}\label{table1}
+\end{center}
+\end{table}
+
+To evaluate, we choose the baseline which predicts all tweets contain no ADR,
+with the accuracy of $89.4052\%$.
+F-Measure and the accuracy are used as evaluation metrics.
+Cost parameter($c$) is an important parameter for SVM,
+describing the penalty for mismatch.
+We try different values of $c$,
+and only show results with the best performance.
+
+As the result,
+our all-feature model with polynominal combinations
+has the best performance(see Table~\ref{table1}).
+The accuracy and F-Measure are both improved,
+and if we dig into this improvement, we can find that
+the main effort comes from the Recall of positive ADR,
+increased from 0.193 to 0.272,
+which means now we can detect positive ADRs better.
+
+
+
+
+% \begin{center}
+%     \begin{tabular}{|r|r|r|r|}
+%       \hline
+%       Accuracy & FScore/N & FScore/Y & FScore/AVG\\
+%       \hline
+%       82.1561\% & 0.896 & 0.364 & 0.840\\
+%       \hline
+%       82.1561\% & 0.896 & 0.356 & 0.839\\
+%
+%       \hline
+%     \end{tabular}
+% \end{center}
+%
+% The first row presents the original model
+% while the other is the model with sentiment feature.
+%
+% We can find that the accuracy of both models are the same,
+% but the new model gives us a worse average Fscore.
+% However the sentiment feature do give us a right determination
+% on the wrong predicted instance by the old model.
+% So, it is possible that the original 92 features are not good enough
+% and it influence the performance of the new sentiment feature.
+%
+% To solve this problem, we would like to add weight to our new feature.
+% Fortunately, Weka supports adding weight to the features by XRFF,
+% which is an XML-based extension of the ARFF format.
+% We tried several weight values, the result is shown below.
+%
+% \begin{center}
+%     \begin{tabular}{|l|r|r|r|r|}
+%       \hline
+%       Weight & Accu & FS/N & FS/Y & FS/AVG\\
+%       \hline
+%       3 & 82.4349\% & 0.898 & 0.376 & 0.843\\
+%       \hline
+%       5 & 82.0632\% & 0.895 & 0.379 & 0.841\\
+%       \hline
+%       7 & 81.8773\% & 0.894 & 0.385 & 0.840\\
+%       \hline
+%     \end{tabular}
+% \end{center}
+%
+% We can find that the sentiment feature can help the FScore/Y,
+% but decrease the FScore/N,
+% and generally speaking, the weight 3 gives us the best performance.
+%
+% \subsection{ADR lexicon}
+% It is a straightfoward idea to generate the feature describing the
+% frequency of ADR related terms in the tweets.
+% Since if more ADR words are found in the tweet,
+% it is more likely to contain an ADR.
+%
+% The ADR lexicon is cited from \newcite{doi:10.1093/jamia/ocu041},
+% including information from SIDER, CHV(Consumer Health Vocabulary) and DIEGO\_lab.
+% The result is shown below.
+%
+% \begin{center}
+%     \begin{tabular}{|l|r|r|r|r|}
+%       \hline
+%       Weight & Accu & FS/N & FS/Y & FS/AVG\\
+%       \hline
+%       0.7 & 82.7138\% & 0.899 & 0.396 & 0.846\\
+%       \hline
+%       1 & 82.5279\% & 0.898 & 0.390 & 0.844\\
+%       \hline
+%       3 & 80.948\% & 0.888 & 0.361 & 0.832\\
+%       \hline
+%     \end{tabular}
+% \end{center}
+%
+% We can find that the lexicon feature do provide a better performance,
+% and when the weight is $0.7$, the performance is the best.
+% I think it is because many tweets without ADR also contain ADR lexicon,
+% according to the distribution of lexicon feature
+% (the proportion of tweets contain ADR lexicon is much larger
+% than the proportion of tweets contain ADR).
+%
+% \subsection{Subjectivity}
+% Another paramter given by the python package TextBlob\cite{textblob}
+% is the subjectivity, which evaluates whether the text is subjective or objective.
+% I tried this feature by different weights,
+% and found it with weight $0.7$ gave a little boost to the performance shown below.
+% \begin{center}
+%     \begin{tabular}{|r|r|r|r|}
+%       \hline
+%       Accu & FS/N & FS/Y & FS/AVG\\
+%       \hline
+%       82.8067\% & 0.900 & 0.397 & 0.847\\
+%       \hline
+%     \end{tabular}
+% \end{center}
+
+% \section{Section}
+%
+% Text,\footnote{Footnote text} with footnotes at bottom of page.
+
+
+% \subsubsection{Subsubsection}
+%
+% T
+% Text of the subsubsection (see Table~\ref{table1}).
+%
+% \begin{table}[h]
+%  \begin{center}
+% \begin{tabular}{|l|l|}
+%
+%       \hline
+%       Corpus & Features\\
+%       \hline\hline
+%       AAA & 1M words\\
+%       BBB & spoken corpus (expensive)\\
+%       CCC & 2M words\\
+%         & free (to academics)\\
+%       \hline
+%
+% \end{tabular}
+% \caption{The caption of the table}\label{table1}
+%  \end{center}
+% \end{table}
+
+
+
+\section{Conclusions}
+
+In this report, we establish the model for predicting ADR in tweets,
+and we focus more on the feature extraction,
+using the punctuation, emotion icon, ADR lexicon, sentiment,
+topic model and doc2vec model.
+As a result, the performance of the new model is increased effectively.
+More methods of feature extraction and classification may be discussed in the future.
+
+
+\bibliographystyle{acl}
+\bibliography{sample}
+
+\end{document}
