@@ -1,3 +1,5 @@
+This program clarifies how to extract features from tweets and use supervised machine learning methods to determine whether a tweet contains an ADR. We will use Weka as the machine learning package.
+
 This file describes the files and dirs about extracting features on tweets.
 
 The package is in 7 files and 7 directory:
